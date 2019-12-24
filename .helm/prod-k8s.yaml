@@ -1,0 +1,65 @@
+
+replicaCount: 1
+
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailablea: 1
+
+image:
+  name: nginx:1.11
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: "gitlab-registry"
+
+nameOverride: "user"
+fullnameOverride: "user"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+env:
+  open:
+    NOT_SECRET: "hello world production!"
+
+  secret:
+    PROD_K8S_VAR: "Hi"
+
+
+ingress:
+  enabled: true
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: user.k8s.chocodev.kz
+      paths:
+        - /
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi
+
+extraVolumeMounts: []
+
+#  - name: timezone
+#    mountPath: /etc/localtime
+#    readOnly: true
+
+extraVolumes: []
+
+#  - name: timezone
+#    hostPath:
+#      path: /usr/share/zoneinfo/Asia/Almaty
+#      type: ""
+
+nodeSelector: []
+
+tolerations: []
+
+affinity: {}

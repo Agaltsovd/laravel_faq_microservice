@@ -1,0 +1,52 @@
+{{- $variables := .Values.env.open -}}
+{{- $image := .Values.image.name -}}
+{{- $resources := .Values.resources -}}
+{{- if .Values.cronjobs -}}
+  {{- range .Values.cronjobs }}
+    {{- if .name }}
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .name }}
+spec:
+  schedule: "{{ .schedule }}"
+  failedJobsHistoryLimit: 2
+  successfulJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+          - name: gitlab-registry
+          containers:
+          - env:
+            {{- range $name, $value := $variables }}
+            {{- if not (empty $value) }}
+            - name: {{ $name | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+            image: "{{ $image }}"
+            resources:
+{{- toYaml $resources | nindent 14 }}
+            args:
+{{ toYaml .args | indent 12 -}}
+            name: event-clean
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+              privileged: false
+              procMount: Default
+              runAsNonRoot: true
+              runAsUser: 33
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+    {{- end }}
+  {{- end }}
+{{- end }} 

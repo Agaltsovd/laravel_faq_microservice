@@ -1,0 +1,25 @@
+
+env:
+  open:
+    # Put environment variables here
+
+ingress:
+  enabled: true
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: larabase.chocodev.kz
+      paths:
+        - /
+  tls:
+    - secretName: k8s-chocodev-tls
+      hosts:
+        - larabase.chocodev.kz
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 256Mi

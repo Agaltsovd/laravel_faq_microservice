@@ -1,0 +1,67 @@
+
+replicaCount: 1
+
+rollingUpdate:
+  maxSurge: 1
+  maxUnavailablea: 1
+
+image:
+  name: nginx:1.11
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: "gitlab-registry"
+
+nameOverride: "larabase"
+fullnameOverride: "larabase"
+
+service:
+  type: ClusterIP
+  port: 9000
+  targetPort: 9000
+
+#env:
+#  open:
+#    NOT_SECRET: "hello world!"
+#  secret:
+#    SECRET: "Secret variable"
+
+ingress:
+  enabled: false
+  annotations: 
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: chart-example.choco.kz
+      paths:
+        - /
+  tls:
+    - secretName: chart-example-tls
+      hosts:
+        - chart-example.choco.kz
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+extraVolumeMounts: []
+
+#  - name: timezone
+#    mountPath: /etc/localtime
+#    readOnly: true
+
+extraVolumes: []
+
+#  - name: timezone
+#    hostPath:
+#      path: /usr/share/zoneinfo/Asia/Almaty
+#      type: ""
+
+nodeSelector: []
+
+tolerations: []
+
+affinity: {}

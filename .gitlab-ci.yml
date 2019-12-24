@@ -1,0 +1,9 @@
+include:
+  - project: 'randd/templates/ci-cd'
+    ref: '1.0'
+    file: '.gitlab-ci.yml'
+
+testing:
+  script:
+    - php artisan key:generate
+    - ./vendor/bin/phpunit --testdox

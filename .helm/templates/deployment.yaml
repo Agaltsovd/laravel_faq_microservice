@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "php-fpm.fullname" . }}
+  labels:
+{{ include "php-fpm.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  {{- if .Values.rollingUpdate }}
+  strategy:
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{  .Values.rollingUpdate.maxUnavailable }}
+    type: RollingUpdate
+  {{- else }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate 
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "php-fpm.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "php-fpm.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          {{- range $name, $value := .Values.env.open }}
+          {{- if not (empty $value) }}
+          - name: {{ $name | quote }}
+            value: {{ $value | quote }}
+          {{- end }}
+          {{- end }}
+          {{- $secret_name := include "php-fpm.fullname" . }}
+          {{- range $name, $value := .Values.env.secret }}
+          {{- if not (empty $value) }}
+          - name: {{ $name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $secret_name }}
+                key: {{ $name | quote }}
+          {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          {{ if (or .Values.livenessProbe .Values.readinessProbe) }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- else -}} 
+          livenessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            timeoutSeconds: 3
+          readinessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            successThreshold: 1
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{- if .Values.extraVolumeMounts }}
+          volumeMounts:
+{{- end }}
+{{- if .Values.extraVolumeMounts }}
+{{ toYaml .Values.extraVolumeMounts | indent 10}}
+{{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- if .Values.extraVolumes }}
+      volumes:
+{{- end }}
+{{- if .Values.extraVolumes }}
+{{ toYaml .Values.extraVolumes | indent 6}}
+{{- end }}
